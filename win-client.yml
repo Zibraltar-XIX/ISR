@@ -1,0 +1,69 @@
+---
+- name: Configurer Windows client
+  hosts: windows
+  gather_facts: no
+
+  vars:
+    mon_domaine_dns: "crocopik.local"
+    ad_admin_user: "Administrator@crocopik.local" 
+    ad_admin_password: "R00t"
+
+    centreon_ip: "192.168.2.3"
+    snmp_community: "public"
+  tasks:
+    - name: Configurer le DNS
+      ansible.windows.win_dns_client:
+        adapter_names: '*'
+        ipv4_addresses:
+          - 192.168.2.2
+
+    - name: Joindre le domaine
+      ansible.windows.win_domain_membership:
+        dns_domain_name: "{{ mon_domaine_dns }}"
+        hostname: "{{ inventory_hostname }}"
+        domain_admin_user: "{{ ad_admin_user }}"
+        domain_admin_password: "{{ ad_admin_password }}"
+        state: domain
+      register: ad_result
+
+    - name: Redémarrer
+      ansible.windows.win_reboot:
+        msg: "Redémarrage post-jonction AD"
+        pre_reboot_delay: 5
+        post_reboot_delay: 15
+      when: ad_result.reboot_required
+
+    - name: Installer la fonctionnalité SNMP Service
+      ansible.windows.win_feature:
+        name: SNMP-Service
+        state: present
+        include_sub_features: yes
+
+    - name: Configurer la Communauté SNMP
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Services\SNMP\Parameters\ValidCommunities
+        name: "{{ snmp_community }}"
+        data: 4
+        type: dword
+
+    - name: Autoriser l'IP de Centreon
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Services\SNMP\Parameters\PermittedManagers
+        name: 1
+        data: "{{ centreon_ip }}"
+        type: string
+
+    - name: Redémarrer le service SNMP pour appliquer les changements
+      ansible.windows.win_service:
+        name: SNMP
+        state: restarted
+        start_mode: auto
+
+    - name: Ouvrir le port SNMP (UDP 161) dans le Pare-feu
+      community.windows.win_firewall_rule:
+        name: "SNMP-IN"
+        localport: 161
+        action: allow
+        direction: in
+        protocol: udp
+        profiles: domain,private,public
