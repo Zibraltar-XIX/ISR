@@ -55,3 +55,57 @@
         direction: in
         protocol: udp
         profiles: domain,private,public
+
+    
+    - name: INSTALLATION CENTREON NSCLIENT (EXE)
+      block:
+        - name: Vérifier la présence du service nscp
+          ansible.windows.win_service:
+            name: nscp
+          register: nscp_service_info
+          failed_when: false # Ne pas planter si le service n'existe pas
+
+        # 2. Télécharger et Installer SEULEMENT si le service n'existe pas
+        - name: Installation de NSClient++
+          block:
+            - name: Créer dossier temporaire
+              ansible.windows.win_file:
+                path: C:\Temp
+                state: directory
+
+            - name: Télécharger l'installeur Centreon-NSClient
+              ansible.windows.win_get_url:
+                url: "https://github.com/centreon/centreon-nsclient-build/releases/download/20251100/Centreon-NSClient-0.5.2.41-20251100-x64.exe"
+                dest: C:\Temp\Centreon-NSCP.exe
+
+            - name: Lancer l'installation silencieuse
+              ansible.windows.win_package:
+                path: C:\Temp\Centreon-NSCP.exe
+                state: present
+                product_id: 'auto' # On laisse Ansible essayer de deviner, ou on mettra le GUID si besoin
+                arguments:
+                  - /quiet
+                  - /norestart
+                  - CONF_CAN_CHANGE=1
+                  - ALLOWED_HOSTS={{ centreon_ip }}
+                  - PASSWORD={{ nscp_password }}
+                  - MONITORING_TOOL=none
+              register: install_result
+
+          when: nscp_service_info.exists == false
+
+        # 3. S'assurer que le service tourne et ouvrir le Firewall
+        - name: Démarrer le service NSClient (nscp)
+          ansible.windows.win_service:
+            name: nscp
+            state: started
+            start_mode: auto
+
+        - name: Ouvrir les ports Firewall (12489 et 5666)
+          community.windows.win_firewall_rule:
+            name: "Centreon NSClient++ Ports"
+            localport: 12489,5666
+            action: allow
+            direction: in
+            protocol: tcp
+            profiles: domain,private,public
