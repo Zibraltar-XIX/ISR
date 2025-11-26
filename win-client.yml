@@ -8,25 +8,10 @@
     ad_admin_user: "Administrator@crocopik.local" 
     ad_admin_password: "R00t"
 
-    centreon_ip: "192.168.2.3"
+    centreon_ip: "192.168.3.2"
     snmp_community: "public"
 
   tasks:
-    - name: Désactiver UAC pour les admins distants (Permet l'install complète)
-      ansible.windows.win_regedit:
-        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
-        name: LocalAccountTokenFilterPolicy
-        data: 1
-        type: dword
-        state: present
-
-    - name: Configurer le DNS
-      ansible.windows.win_dns_client:
-        adapter_names: '*'
-        ipv4_addresses:
-          - 192.168.2.2
-          - 1.1.1.1
-
     - name: Installer le client SNMP
       ansible.windows.win_shell: Add-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
       become: yes
@@ -41,19 +26,6 @@
         domain_admin_password: "{{ ad_admin_password }}"
         state: domain
       register: ad_result
-
-    - name: Redémarrer
-      ansible.windows.win_reboot:
-        msg: "Redémarrage post-jonction AD"
-        pre_reboot_delay: 5
-        post_reboot_delay: 15
-      when: ad_result.reboot_required
-
-    - name: Installer la fonctionnalité SNMP Service
-      ansible.windows.win_feature:
-        name: SNMP-Service
-        state: present
-        include_sub_features: yes
 
     - name: Configurer la Communauté SNMP
       ansible.windows.win_regedit:
