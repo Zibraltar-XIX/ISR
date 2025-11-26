@@ -27,17 +27,8 @@
           - 192.168.2.2
           - 1.1.1.1
 
-    - name: Installer le client SNMP (Windows 10/11)
-      ansible.windows.win_shell: |
-        $snmp = Get-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
-        if ($snmp.State -ne 'Installed') {
-            Add-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0" -LimitAccess:$false -Source "Internet"
-            Write-Output "INSTALLED_NOW"
-        } else {
-            Write-Output "ALREADY_INSTALLED"
-        }
-      register: snmp_result
-      changed_when: "'INSTALLED_NOW' in snmp_result.stdout"
+    - name: Installer le client SNMP
+      ansible.windows.win_shell: Add-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
 
     - name: Joindre le domaine
       ansible.windows.win_domain_membership:
