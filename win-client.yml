@@ -10,7 +10,20 @@
 
     centreon_ip: "192.168.2.3"
     snmp_community: "public"
+
   tasks:
+    - name: Installer SNMP (Windows Server & Desktop)
+      block:
+        - name: Tenter l'installation via win_feature (Server)
+          ansible.windows.win_feature:
+            name: SNMP-Service
+            state: present
+            include_sub_features: yes
+      rescue:
+        - name: Installer via Add-WindowsCapability (Desktop)
+          ansible.windows.win_shell: |
+            Get-WindowsCapability -Online -Name "SNMP*" | Add-WindowsCapability -Online
+
     - name: Configurer le DNS
       ansible.windows.win_dns_client:
         adapter_names: '*'
