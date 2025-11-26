@@ -29,6 +29,9 @@
 
     - name: Installer le client SNMP
       ansible.windows.win_shell: Add-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
+      become: yes
+      become_method: runas
+      become_user: SYSTEM
 
     - name: Joindre le domaine
       ansible.windows.win_domain_membership:
