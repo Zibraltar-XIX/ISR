@@ -12,13 +12,21 @@
     snmp_community: "public"
 
   tasks:
+    - name: Désactiver UAC pour les admins distants (Permet l'install complète)
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+        name: LocalAccountTokenFilterPolicy
+        data: 1
+        type: dword
+        state: present
+
     - name: Configurer le DNS
       ansible.windows.win_dns_client:
         adapter_names: '*'
         ipv4_addresses:
           - 192.168.2.2
           - 1.1.1.1
-          
+
     - name: Installer le client SNMP (Windows 10/11)
       ansible.windows.win_shell: |
         $snmp = Get-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
