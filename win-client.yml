@@ -12,17 +12,18 @@
     snmp_community: "public"
 
   tasks:
-    - name: Installer SNMP (Windows Server & Desktop)
-      block:
-        - name: Tenter l'installation via win_feature (Server)
-          ansible.windows.win_feature:
-            name: SNMP-Service
-            state: present
-            include_sub_features: yes
-      rescue:
-        - name: Installer via Add-WindowsCapability (Desktop)
-          ansible.windows.win_shell: |
-            Get-WindowsCapability -Online -Name "SNMP*" | Add-WindowsCapability -Online
+    - name: Installer le client SNMP (Windows 10/11)
+      ansible.windows.win_shell: |
+        $snmp = Get-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
+        if ($snmp.State -ne 'Installed') {
+            Add-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
+            Write-Output "INSTALLED_NOW"
+        } else {
+            Write-Output "ALREADY_INSTALLED"
+        }
+      register: snmp_result
+      changed_when: "'INSTALLED_NOW' in snmp_result.stdout"
+
 
     - name: Configurer le DNS
       ansible.windows.win_dns_client:
