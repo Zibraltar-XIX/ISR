@@ -12,11 +12,19 @@
     snmp_community: "public"
 
   tasks:
-    - name: Installer le client SNMP
-      ansible.windows.win_shell: Add-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
+    - name: Installer le client SNMP (seulement si absent)
+      ansible.windows.win_shell: |
+        $cap = Get-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
+        if ($cap.State -ne "Installed") {
+            Add-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
+        } else {
+            Write-Output "ALREADY_INSTALLED"
+        }
       become: yes
       become_method: runas
       become_user: SYSTEM
+      register: snmp_install_result
+      changed_when: "'ALREADY_INSTALLED' not in snmp_install_result.stdout"
 
     - name: Joindre le domaine
       ansible.windows.win_domain_membership:
@@ -86,10 +94,6 @@
                 arguments:
                   - /quiet
                   - /norestart
-                  - CONF_CAN_CHANGE=1
-                  - ALLOWED_HOSTS={{ centreon_ip }}
-                  - PASSWORD={{ nscp_password }}
-                  - MONITORING_TOOL=none
               register: install_result
 
           when: nscp_service_info.exists == false
