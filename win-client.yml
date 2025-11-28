@@ -91,10 +91,10 @@
                 path: C:\Temp\Centreon-NSCP.exe
                 state: present
                 product_id: 'auto' # On laisse Ansible essayer de deviner, ou on mettra le GUID si besoin
-                arguments:
-                  - /install
-                  - /passive
-                  - /norestart
+                #arguments:
+                  #- /install
+                  #- /passive
+                  #- /norestart
               register: install_result
 
           when: nscp_service_info.exists == false
