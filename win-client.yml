@@ -87,13 +87,10 @@
                 dest: C:\Temp\Centreon-NSCP.exe
 
             - name: Lancer l'installation silencieuse
-              ansible.windows.win_package:
-                path: C:\Temp\Centreon-NSCP.exe
-                state: present
-                product_id: '1B7B125C-AD5E-44B0-A48B-7FB69F04F102' # On laisse Ansible essayer de deviner, ou on mettra le GUID si besoin
-                arguments: 
-                  - /S
-                  - /nouninstall
+              ansible.windows.win_shell: C:\Temp\Centreon-NSCP.exe /S /nouninstall
+              become: yes
+              become_method: runas
+              become_user: SYSTEM
               register: install_result
 
           when: nscp_service_info.exists == false
