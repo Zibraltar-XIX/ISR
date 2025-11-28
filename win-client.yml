@@ -92,7 +92,8 @@
                 state: present
                 product_id: 'auto' # On laisse Ansible essayer de deviner, ou on mettra le GUID si besoin
                 arguments:
-                  - /quiet
+                  - /install
+                  - /passive
                   - /norestart
               register: install_result
 
