@@ -88,7 +88,7 @@
 
             - name: Lancer l'installation silencieuse (Méthode Robuste)
               ansible.windows.win_shell: |
-                $proc = Start-Process -FilePath "C:\Temp\Centreon-NSCP.exe" -ArgumentList "/S", "/nouninstall" -PassThru -Wait
+                $proc = Start-Process -FilePath "C:\Temp\Centreon-NSCP.exe" -ArgumentList "/S /nouninstall" -PassThru -Wait
                 if ($proc.ExitCode -ne 0) {
                     Write-Error "Installation failed with exit code $($proc.ExitCode)"
                 }
