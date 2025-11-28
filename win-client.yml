@@ -86,12 +86,17 @@
                 url: "https://github.com/centreon/centreon-nsclient-build/releases/download/20251100/Centreon-NSClient-0.5.2.41-20251100-x64.exe"
                 dest: C:\Temp\Centreon-NSCP.exe
 
-            - name: Lancer l'installation silencieuse
-              ansible.windows.win_shell: C:\Temp\Centreon-NSCP.exe /S /nouninstall
+            - name: Lancer l'installation silencieuse (Méthode Robuste)
+              ansible.windows.win_shell: |
+                $proc = Start-Process -FilePath "C:\Temp\Centreon-NSCP.exe" -ArgumentList "/S", "/nouninstall" -PassThru -Wait
+                if ($proc.ExitCode -ne 0) {
+                    Write-Error "Installation failed with exit code $($proc.ExitCode)"
+                }
               become: yes
               become_method: runas
               become_user: SYSTEM
               register: install_result
+
 
           when: nscp_service_info.exists == false
 
