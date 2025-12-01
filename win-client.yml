@@ -1,17 +1,19 @@
 ---
-- name: Configurer Windows client
+- name: Configurer Windows client (SNMP + NSClient)
   hosts: windows
   gather_facts: no
 
   vars:
     mon_domaine_dns: "crocopik.local"
-    ad_admin_user: "Administrator@crocopik.local" 
+    ad_admin_user: "Administrator@crocopik.local"
     ad_admin_password: "R00t"
 
     centreon_ip: "192.168.3.2"
     snmp_community: "public"
+    nscp_password: "root" # Mot de passe pour l'accès NSClient
 
   tasks:
+    # --- PARTIE 1 : CONFIGURATION SNMP ---
     - name: Installer le client SNMP (seulement si absent)
       ansible.windows.win_shell: |
         $cap = Get-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
@@ -42,20 +44,20 @@
         data: 4
         type: dword
 
-    - name: Autoriser l'IP de Centreon
+    - name: Autoriser l'IP de Centreon (SNMP)
       ansible.windows.win_regedit:
         path: HKLM:\SYSTEM\CurrentControlSet\Services\SNMP\Parameters\PermittedManagers
         name: 1
         data: "{{ centreon_ip }}"
         type: string
 
-    - name: Redémarrer le service SNMP pour appliquer les changements
+    - name: Redémarrer le service SNMP
       ansible.windows.win_service:
         name: SNMP
         state: restarted
         start_mode: auto
 
-    - name: Ouvrir le port SNMP (UDP 161) dans le Pare-feu
+    - name: Ouvrir le port SNMP (UDP 161)
       community.windows.win_firewall_rule:
         name: "SNMP-IN"
         localport: 161
@@ -64,17 +66,17 @@
         protocol: udp
         profiles: domain,private,public
 
-    
-    - name: INSTALLATION CENTREON NSCLIENT (EXE)
+    # --- PARTIE 2 : INSTALLATION NSCLIENT (MÉTHODE ROBUSTE EXE) ---
+    - name: GESTION CENTREON NSCLIENT (EXE)
       block:
         - name: Vérifier la présence du service nscp
           ansible.windows.win_service:
             name: nscp
           register: nscp_service_info
-          failed_when: false # Ne pas planter si le service n'existe pas
+          failed_when: false
 
-        # 2. Télécharger et Installer SEULEMENT si le service n'existe pas
-        - name: Installation de NSClient++
+        # On lance l'installation SEULEMENT si le service n'existe pas
+        - name: Installation via Tâche Planifiée
           block:
             - name: Créer dossier temporaire
               ansible.windows.win_file:
@@ -86,32 +88,44 @@
                 url: "https://github.com/centreon/centreon-nsclient-build/releases/download/20251100/Centreon-NSClient-0.5.2.41-20251100-x64.exe"
                 dest: C:\Temp\Centreon-NSCP.exe
 
-            - name: Désactiver UAC distant
-              ansible.windows.win_regedit:
-                path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
-                name: LocalAccountTokenFilterPolicy
-                data: 1
-                type: dword
+            - name: 1. Créer la tâche planifiée pour installer (SYSTEM)
+              ansible.windows.win_scheduled_task:
+                name: InstallNSClientTask
+                username: SYSTEM
+                disallow_start_if_on_batteries: no
+                stop_if_going_on_batteries: no
+                actions:
+                  - path: C:\Temp\Centreon-NSCP.exe
+                    arguments: /S /nouninstall
+                triggers:
+                  - type: registration
 
-            - name: Lancer l'installation silencieuse
-              ansible.windows.win_package:
-                path: C:\Temp\Centreon-NSCP.exe
-                product_id: '{1B7B125C-AD5E-44B0-A48B-7FB69F04F102}' # On laisse Ansible essayer de deviner, ou on mettra le GUID si besoin
-                arguments: /S /nouninstall
-              become: yes
-              become_method: runas
-              become_user: SYSTEM
+            - name: 2. Lancer la tâche maintenant
+              ansible.windows.win_shell: Start-ScheduledTask -TaskName "InstallNSClientTask"
+
+            - name: 3. Attendre que le service 'nscp' existe vraiment
+              ansible.windows.win_service:
+                name: nscp
+              register: service_status
+              until: service_status.exists == true
+              retries: 20  # Attend max 5 minutes (20 * 15s)
+              delay: 15
+
+            - name: 4. Nettoyer la tâche planifiée
+              ansible.windows.win_scheduled_task:
+                name: InstallNSClientTask
+                state: absent
 
           when: nscp_service_info.exists == false
 
-        # 3. S'assurer que le service tourne et ouvrir le Firewall
+        # Configuration Post-Installation (Service + Firewall)
         - name: Démarrer le service NSClient (nscp)
           ansible.windows.win_service:
             name: nscp
             state: started
             start_mode: auto
 
-        - name: Ouvrir les ports Firewall (12489 et 5666)
+        - name: Ouvrir les ports Firewall NSClient (12489, 5666)
           community.windows.win_firewall_rule:
             name: "Centreon NSClient++ Ports"
             localport: 12489,5666
