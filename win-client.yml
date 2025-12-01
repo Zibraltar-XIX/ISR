@@ -89,7 +89,7 @@
                 dest: C:\Temp\Centreon-NSCP.exe
 
             - name: 1. Créer la tâche planifiée pour installer (SYSTEM)
-              ansible.windows.win_scheduled_task:
+              community.windows.win_scheduled_task:
                 name: InstallNSClientTask
                 username: SYSTEM
                 disallow_start_if_on_batteries: no
