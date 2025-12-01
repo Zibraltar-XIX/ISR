@@ -112,7 +112,7 @@
               delay: 15
 
             - name: 4. Nettoyer la tâche planifiée
-              ansible.windows.win_scheduled_task:
+              community.windows.win_scheduled_task:
                 name: InstallNSClientTask
                 state: absent
 
