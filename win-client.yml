@@ -29,7 +29,7 @@
       changed_when: "'ALREADY_INSTALLED' not in snmp_install_result.stdout"
 
     - name: Joindre le domaine
-      ansible.windows.win_domain_membership:
+      ansible.windows.microsoft.ad.membership:
         dns_domain_name: "{{ mon_domaine_dns }}"
         hostname: "{{ inventory_hostname }}"
         domain_admin_user: "{{ ad_admin_user }}"
