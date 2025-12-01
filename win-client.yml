@@ -91,7 +91,6 @@
                 path: C:\Temp\Centreon-NSCP.exe
                 product_id: '{1B7B125C-AD5E-44B0-A48B-7FB69F04F102}' # On laisse Ansible essayer de deviner, ou on mettra le GUID si besoin
                 arguments: /S /nouninstall
-                state: present
               become: true
               become_method: runas
               become_user: SYSTEM
