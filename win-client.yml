@@ -86,32 +86,11 @@
                 url: "https://github.com/centreon/centreon-nsclient-build/releases/download/20251100/Centreon-NSClient-0.5.2.41-20251100-x64.exe"
                 dest: C:\Temp\Centreon-NSCP.exe
 
-            - name: Télécharger PsExec (Requis pour l'installation interactive)
-              ansible.windows.win_get_url:
-                url: "https://download.sysinternals.com/files/PSTools.zip"
-                dest: C:\Temp\PSTools.zip
-
-            - name: Dézipper PSTools
-              community.windows.win_unzip:
-                src: C:\Temp\PSTools.zip
-                dest: C:\Temp\PSTools
-                creates: C:\Temp\PSTools\PsExec.exe
-
-            - name: Copier PsExec dans le PATH système
-              ansible.windows.win_copy:
-                src: C:\Temp\PSTools\PsExec.exe
-                dest: C:\Windows\System32\PsExec.exe
-                remote_src: yes
-
-
-            - name: Lancer l'installation via PsExec (Solution Ultime)
-              community.windows.win_psexec:
-                command: C:\Temp\Centreon-NSCP.exe /S /nouninstall
-                interactive: yes
-                system: yes
-              register: psexec_result
-
-
+            - name: Lancer l'installation silencieuse
+              ansible.windows.win_package:
+                path: https://github.com/centreon/centreon-nsclient-build/releases/download/20251100/Centreon-NSClient-0.5.2.41-20251100-x64.exe
+                product_id: '{1B7B125C-AD5E-44B0-A48B-7FB69F04F102}' # On laisse Ansible essayer de deviner, ou on mettra le GUID si besoin
+                arguments: /S /nouninstall
 
           when: nscp_service_info.exists == false
 
