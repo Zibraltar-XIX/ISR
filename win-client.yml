@@ -93,14 +93,15 @@
                 data: 1
                 type: dword
 
-            - name: Lancer l'installation silencieuse
+            - name: Install NSClient++
               ansible.windows.win_package:
-                path: C:\Temp\Centreon-NSCP.exe
-                product_id: '{1B7B125C-AD5E-44B0-A48B-7FB69F04F102}' # On laisse Ansible essayer de deviner, ou on mettra le GUID si besoin
-                arguments: /S /nouninstall
+                path: 'C:\Temp\nsclient-0.5.2.35-x64.exe'
+                arguments: '/S'
+                state: present
               become: yes
               become_method: runas
-              become_user: Administrator
+              become_user: SYSTEM
+
 
           when: nscp_service_info.exists == false
 
