@@ -95,6 +95,15 @@
               become_method: runas
               become_user: SYSTEM
 
+            - name: PAUSE - Attendre que l'installation finisse réellement
+              ansible.windows.win_service:
+                name: nscp
+              register: service_status
+              until: service_status.exists == true
+              retries: 30      # Essaie 30 fois
+              delay: 10        # Attend 10 secondes entre chaque essai
+              # Total : 5 minutes d'attente max
+
           when: nscp_service_info.exists == false
 
         # 3. S'assurer que le service tourne et ouvrir le Firewall
