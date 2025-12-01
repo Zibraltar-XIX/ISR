@@ -94,6 +94,7 @@
               become: true
               become_method: runas
               become_user: SYSTEM
+              delay: 15
 
             - name: PAUSE - Attendre que l'installation finisse réellement
               ansible.windows.win_service:
