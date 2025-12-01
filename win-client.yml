@@ -100,8 +100,7 @@
                 arguments: /S /nouninstall
               become: yes
               become_method: runas
-              become_user: CROCOPIK\Administrator
-              become_password: "R00t"
+              become_user: Administrator
 
           when: nscp_service_info.exists == false
 
