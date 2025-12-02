@@ -105,7 +105,7 @@
         - name: Ouvrir les ports Firewall (12489 et 5666)
           community.windows.win_firewall_rule:
             name: "Centreon NSClient++ Ports"
-            localport: 161,12489,5666,22,
+            localport: 161,12489,5666
             action: allow
             direction: in
             protocol: any
