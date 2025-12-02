@@ -129,3 +129,11 @@
             direction: in
             protocol: tcp
             profiles: domain,private,public
+
+        - name: Désactiver le pare-feu Windows (Tous profils)
+          community.windows.win_firewall:
+            state: disabled
+            profiles:
+              - Domain
+              - Private
+              - Public
