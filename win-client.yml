@@ -115,7 +115,6 @@
           ansible.windows.win_copy:
             src: nsclient.ini
             dest: "C:\\Program Files\\Centreon NSClient++\\nsclient.ini"
-          notify: Redémarrer NSClient
 
         - name: Redémarrer NSClient
           ansible.windows.win_service:
