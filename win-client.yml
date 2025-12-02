@@ -128,12 +128,6 @@
             protocol: icmpv4
             profiles: domain,private,public
 
-        - name: Autoriser l'exécution de scripts PowerShell (RemoteSigned)
-          ansible.windows.win_shell: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine -Force
-          become: yes
-          become_method: runas
-          become_user: SYSTEM
-
         - name: Copier le fichier nsclient.ini depuis le serveur Ansible
           ansible.windows.win_copy:
             src: test.ps1
