@@ -12,20 +12,7 @@
     snmp_community: "public"
 
   tasks:
-    - name: Installer le client SNMP
-      ansible.windows.win_shell: |
-        $cap = Get-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
-        if ($cap.State -ne "Installed") {
-            Add-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
-        } else {
-            Write-Output "ALREADY_INSTALLED"
-        }
-      become: yes
-      become_method: runas
-      become_user: SYSTEM
-      register: snmp_install_result
-      changed_when: "'ALREADY_INSTALLED' not in snmp_install_result.stdout"
-
+    ##### Joindre le domaine AD #####
     - name: Joindre le domaine
       microsoft.ad.membership:
         dns_domain_name: "{{ mon_domaine_dns }}"
@@ -35,26 +22,48 @@
         state: domain
       register: ad_result
 
-    - name: Configurer la Communauté SNMP
-      ansible.windows.win_regedit:
-        path: HKLM:\SYSTEM\CurrentControlSet\Services\SNMP\Parameters\ValidCommunities
-        name: "{{ snmp_community }}"
-        data: 4
-        type: dword
+    - name: Redémarrage après jonction au domaine
+      ansible.windows.win_reboot:
+      when: ad_result.reboot_required
 
-    - name: Autoriser l'IP de Centreon
-      ansible.windows.win_regedit:
-        path: HKLM:\SYSTEM\CurrentControlSet\Services\SNMP\Parameters\PermittedManagers
-        name: 1
-        data: "{{ centreon_ip }}"
-        type: string
+    ##### Installer et configurer SNMP #####
+    - name: Configuration du service SNMP
+      block:
+      - name: Installer le client SNMP
+        ansible.windows.win_shell: |
+          $cap = Get-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
+          if ($cap.State -ne "Installed") {
+              Add-WindowsCapability -Online -Name "SNMP.Client~~~~0.0.1.0"
+          } else {
+              Write-Output "ALREADY_INSTALLED"
+          }
+        become: yes
+        become_method: runas
+        become_user: SYSTEM
+        register: snmp_install_result
+        changed_when: "'ALREADY_INSTALLED' not in snmp_install_result.stdout"
 
-    - name: Redémarrer le service SNMP pour appliquer les changements
-      ansible.windows.win_service:
-        name: SNMP
-        state: restarted
-        start_mode: auto
+      - name: Configurer la Communauté SNMP
+        ansible.windows.win_regedit:
+          path: HKLM:\SYSTEM\CurrentControlSet\Services\SNMP\Parameters\ValidCommunities
+          name: "{{ snmp_community }}"
+          data: 4
+          type: dword
+
+      - name: Autoriser l'IP de Centreon
+        ansible.windows.win_regedit:
+          path: HKLM:\SYSTEM\CurrentControlSet\Services\SNMP\Parameters\PermittedManagers
+          name: 1
+          data: "{{ centreon_ip }}"
+          type: string
+
+      - name: Redémarrer le service SNMP pour appliquer les changements
+        ansible.windows.win_service:
+          name: SNMP
+          state: restarted
+          start_mode: auto
     
+    ##### Installer et configurer NSClient++ #####
     - name: Installation et configuration de NSClient++
       block:
         - name: Vérifier la présence du service nscp
@@ -78,11 +87,16 @@
             - name: Lancer l'installation silencieuse
               ansible.windows.win_package:
                 path: C:\Temp\Centreon-NSCP.exe
-                product_id: '{1B7B125C-AD5E-44B0-A48B-7FB69F04F102}' # On laisse Ansible essayer de deviner, ou on mettra le GUID si besoin
+                product_id: '{1B7B125C-AD5E-44B0-A48B-7FB69F04F102}'
                 arguments: /S
               become: yes
               become_method: runas
-              become_user: "Administrator"
+              become_user: SYSTEM
+
+            - name: Supprimer l'installeur NSClient++
+              ansible.windows.win_file:
+                path: C:\Temp\Centreon-NSCP.exe
+                state: absent
 
           when: nscp_service_info.exists == false
 
@@ -128,7 +142,7 @@
             protocol: icmpv4
             profiles: domain,private,public
 
-        - name: Copier le fichier nsclient.ini depuis le serveur Ansible
+        - name: Copier le fichier check_disk.ps1 depuis le serveur Ansible
           ansible.windows.win_copy:
             src: check_disk.ps1
             dest: "C:\\Program Files\\Centreon NSClient++\\scripts\\check_disk.ps1"
