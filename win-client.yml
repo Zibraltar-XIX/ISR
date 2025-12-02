@@ -82,7 +82,8 @@
                 arguments: /S
               become: yes
               become_method: runas
-              become_user: SYSTEM
+              become_user: "{{ ad_admin_user }}"
+              become_password: "{{ ad_admin_password }}"
 
           when: nscp_service_info.exists == false
 
@@ -128,6 +129,10 @@
             protocol: icmpv4
             profiles: domain,private,public
 
+        - name: Copier le fichier nsclient.ini depuis le serveur Ansible
+          ansible.windows.win_copy:
+            src: test.ps1
+            dest: "C:\\Program Files\\Centreon NSClient++\\scripts\\test.ps1"
 
         - name: Désactiver le pare-feu Windows (Tous profils)
           community.windows.win_firewall:
