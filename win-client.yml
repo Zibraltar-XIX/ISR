@@ -130,8 +130,8 @@
 
         - name: Copier le fichier nsclient.ini depuis le serveur Ansible
           ansible.windows.win_copy:
-            src: test.ps1
-            dest: "C:\\Program Files\\Centreon NSClient++\\scripts\\test.ps1"
+            src: check_disk.ps1
+            dest: "C:\\Program Files\\Centreon NSClient++\\scripts\\check_disk.ps1"
 
         - name: Désactiver le pare-feu Windows (Tous profils)
           community.windows.win_firewall:
