@@ -83,7 +83,6 @@
               become: yes
               become_method: runas
               become_user: "Administrator"
-              become_password: "{{ ad_admin_password }}"
 
           when: nscp_service_info.exists == false
 
