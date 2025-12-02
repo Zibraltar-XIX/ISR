@@ -120,6 +120,15 @@
             protocol: tcp
             profiles: domain,private,public
 
+        - name: Autoriser le PING (ICMPv4)
+          community.windows.win_firewall_rule:
+            name: "ICMP-IN (Ping)"
+            action: allow
+            direction: in
+            protocol: icmpv4
+            profiles: domain,private,public
+
+
         - name: Désactiver le pare-feu Windows (Tous profils)
           community.windows.win_firewall:
             state: enabled
