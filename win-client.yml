@@ -111,6 +111,17 @@
             state: started
             start_mode: auto
 
+        - name: Copier le fichier nsclient.ini depuis le serveur Ansible
+          ansible.windows.win_copy:
+            src: nsclient.ini
+            dest: "C:\\Program Files\\Centreon NSClient++\\nsclient.ini"
+          notify: Redémarrer NSClient
+
+        - name: Redémarrer NSClient
+          ansible.windows.win_service:
+            name: nscp
+            state: restarted
+
         - name: Ouvrir les ports Firewall (12489 et 5666)
           community.windows.win_firewall_rule:
             name: "Centreon NSClient++ Ports"
