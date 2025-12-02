@@ -102,13 +102,22 @@
             name: nscp
             state: restarted
 
-        - name: Ouvrir les ports Firewall (12489 et 5666)
+        - name: Ouvrir le port SNMP
           community.windows.win_firewall_rule:
-            name: "Centreon NSClient++ Ports"
-            localport: 161,12489,5666
+            name: "Centreon SNMP-IN"
+            localport: 161
             action: allow
             direction: in
-            protocol: any
+            protocol: udp
+            profiles: domain,private,public
+
+        - name: Ouvrir les ports NSClient
+          community.windows.win_firewall_rule:
+            name: "Centreon NSClient-IN"
+            localport: 12489,5666
+            action: allow
+            direction: in
+            protocol: tcp
             profiles: domain,private,public
 
         - name: Désactiver le pare-feu Windows (Tous profils)
