@@ -146,11 +146,3 @@
           ansible.windows.win_copy:
             src: check_disk.ps1
             dest: "C:\\Program Files\\Centreon NSClient++\\scripts\\check_disk.ps1"
-
-        - name: Désactiver le pare-feu Windows (Tous profils)
-          community.windows.win_firewall:
-            state: enabled
-            profiles:
-              - Domain
-              - Private
-              - Public
