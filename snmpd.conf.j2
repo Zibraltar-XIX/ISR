@@ -1,0 +1,37 @@
+###############################################################################
+# SNMP Configuration - AlmaLinux + Centreon
+###############################################################################
+
+# Écoute sur toutes les interfaces
+agentAddress udp:161,udp6:[::1]:161
+
+# Informations système
+syslocation "Datacenter"
+syscontact "admin@example.com"
+
+###############################################################################
+# Vues VACM (OBLIGATOIRE pour RHEL/AlmaLinux)
+###############################################################################
+
+# Vue complète de l'arbre OID (nécessaire pour Centreon)
+view systemview included .1.3.6.1.2.1.1
+view systemview included .1.3.6.1.2.1.25.1
+view systemview included .1.3
+
+###############################################################################
+# Accès SNMPv2c
+###############################################################################
+
+# Remplacez 192.168.3.2 par l'IP de votre collecteur Centreon
+rocommunity public {{ centreon_ip }} -V systemview
+rocommunity public localhost -V systemview
+
+###############################################################################
+# Surveillance
+###############################################################################
+
+proc sshd
+proc snmpd
+disk / 10%
+disk /var 10%
+load 12 10 5
