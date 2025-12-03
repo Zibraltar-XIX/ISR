@@ -48,7 +48,7 @@
         dest: /etc/snmp/snmpd.conf
         mode: '0644'
       vars:
-        centreon_ip: "{{ centreon_ip }}"
+        centreon_ip: "{{ poller_ip }}"
       register: snmpd_conf
 
     - name: Rédémarrer le service snmpd
