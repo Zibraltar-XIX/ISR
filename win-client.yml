@@ -13,18 +13,18 @@
 
   tasks:
     ##### Joindre le domaine AD #####
-    - name: Joindre le domaine
-      microsoft.ad.membership:
-        dns_domain_name: "{{ mon_domaine_dns }}"
-        hostname: "{{ inventory_hostname }}"
-        domain_admin_user: "{{ ad_admin_user }}"
-        domain_admin_password: "{{ ad_admin_password }}"
-        state: domain
-      register: ad_result
+    # - name: Joindre le domaine
+    #   microsoft.ad.membership:
+    #     dns_domain_name: "{{ mon_domaine_dns }}"
+    #     hostname: "{{ inventory_hostname }}"
+    #     domain_admin_user: "{{ ad_admin_user }}"
+    #     domain_admin_password: "{{ ad_admin_password }}"
+    #     state: domain
+    #   register: ad_result
 
-    - name: Redémarrage après jonction au domaine
-      ansible.windows.win_reboot:
-      when: ad_result.reboot_required
+    # - name: Redémarrage après jonction au domaine
+    #   ansible.windows.win_reboot:
+    #   when: ad_result.reboot_required
 
     ##### Installer et configurer SNMP #####
     - name: Configuration du service SNMP
