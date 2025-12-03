@@ -1,6 +1,6 @@
 ---
 - name: Configurer Linux client
-  hosts: Linux
+  hosts: linux
   become: true
 
   vars:
